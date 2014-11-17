@@ -5,9 +5,10 @@ import com.jogamp.newt.event.WindowAdapter
 import com.jogamp.newt.event.WindowEvent
 import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.FPSAnimator
+import javax.media.opengl.FPSCounter
 import javax.media.opengl.GLCapabilities
-import javax.media.opengl.GLProfile
 import javax.media.opengl.GLEventListener
+import javax.media.opengl.GLProfile
 
 /**
  *
