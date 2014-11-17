@@ -32,7 +32,7 @@ class GlApplication
         demo = demoClass.newInstance
     }
 
-    def runNewt()
+    def runNewt(String demoName)
     {
         println( 'runNewt()' )
 
@@ -43,9 +43,10 @@ class GlApplication
 
         val animator = new FPSAnimator( glWindow, 30 )
 
-        glWindow.setTitle( 'NEWT Window Test' )
+        glWindow.setTitle( demoName )
         glWindow.setSize( width, height )
         glWindow.setVisible( true )
+        glWindow.setUpdateFPSFrames( FPSCounter::DEFAULT_FRAMES_PER_INTERVAL, System.err )
 
         glWindow.addGLEventListener( demo )
 
