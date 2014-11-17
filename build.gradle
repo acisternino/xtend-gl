@@ -1,0 +1,41 @@
+plugins {
+    id 'org.xtend.xtend' version '0.3.2'    // applies also eclipse
+}
+
+apply plugin: 'application'
+
+version = 1.0
+group   = 'com.example.xgl'
+
+sourceCompatibility = 1.7
+mainClassName       = 'prova.xtend.Main'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile         'org.eclipse.xtend:org.eclipse.xtend.lib:2.7.+'
+    compile         'com.google.guava:guava:15.0'
+
+    compile         'org.jogamp.gluegen:gluegen-rt-main:2.2.+'
+    compile         'org.jogamp.jogl:jogl-all-main:2.2.+'
+
+    testCompile     'junit:junit:4.11'
+}
+
+eclipse {
+    pathVariables 'GRADLE_USER_HOME': file( "${System.properties['user.home']}/.gradle" )
+
+    classpath {
+        containers.clear()
+        containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7'
+    }
+}
+
+// gradle run -Pargs="arg1 arg2"
+run {
+    if ( project.hasProperty( 'args' ) ) {
+        args project.args.split( '\\s' )
+    }
+}

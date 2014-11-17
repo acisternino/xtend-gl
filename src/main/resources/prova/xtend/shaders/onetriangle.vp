@@ -1,0 +1,12 @@
+#version 150
+
+in vec3 vert_position;
+in vec3 vert_colour;
+
+out vec3 colour;
+
+void main() {
+    colour = vert_colour;
+
+    gl_Position = vec4( vert_position, 1.0 );
+}

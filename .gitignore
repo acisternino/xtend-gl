@@ -1,0 +1,23 @@
+# java specific
+*.class
+
+# build directories
+target/
+build/
+bin/
+.gradle/
+
+# IDE's
+.nb-gradle/
+.nb-gradle-properties
+.classpath
+.project
+.settings/
+private/
+
+# generic files to ignore
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
