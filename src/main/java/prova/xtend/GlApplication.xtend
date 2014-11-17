@@ -12,7 +12,7 @@ import javax.media.opengl.GLEventListener
 /**
  *
  */
-class Application
+class GlApplication
 {
     val glp  = GLProfile.get( GLProfile.GL3 )
     val caps = new GLCapabilities( glp )
