@@ -8,7 +8,13 @@ uniform mat4 pmvMatrix[2];
 out vec3 color;
 
 void main() {
+
     color = vert_color;
 
+    /*
+     *  The standard transformation for a vertex in a Vertex Shader is:
+     *
+     *  gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+     */
     gl_Position = pmvMatrix[0] * pmvMatrix[1] * vec4( vert_position, 1.0 );
 }

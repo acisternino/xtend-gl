@@ -11,7 +11,8 @@ import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLProfile
 
 /**
- *
+ * Runs the demo class provided at construction time.
+ * Also handles the window system-specific objects.
  */
 class GlApplication
 {
@@ -33,6 +34,9 @@ class GlApplication
         demo = demoClass.newInstance
     }
 
+    /**
+     * Runs the demo using NEWT.
+     */
     def runNewt(String demoName)
     {
         println( 'runNewt()' )
@@ -42,6 +46,7 @@ class GlApplication
 
         val glWindow = GLWindow.create( screen, caps )
 
+        // Animator that call the window's display() method 30 times per second
         val animator = new FPSAnimator( glWindow, 30 )
 
         glWindow.setTitle( demoName )
