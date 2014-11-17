@@ -16,7 +16,8 @@ class Main {
     val demos = #{
         'onetriangle'  -> OneTriangle,
         'animtriangle' -> AnimTriangle,
-        'onecube'      -> OneCube
+        'onecube'      -> OneCube,
+        'spincube'     -> SpinCube
     }
 
     def run(String[] args) {
