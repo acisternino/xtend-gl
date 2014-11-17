@@ -26,9 +26,9 @@ class Main {
         // call very early as suggested by the docs
         GLProfile.initSingleton()
 
-        val app = new Application( demoClass, 400, 400 )
+        val app = new GlApplication( demoClass, 400, 400 )
 
-        app.runNewt()
+        app.runNewt( 'OpenGL Demo: ' + demoClass.simpleName )
     }
 
     def private parseArgs(String[] args) {
