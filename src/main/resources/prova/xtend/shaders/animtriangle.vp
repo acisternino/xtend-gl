@@ -1,15 +1,15 @@
 #version 150
 
-in vec3 vert_position;
-in vec3 vert_colour;
+in vec2 vert_position;
+in vec3 vert_color;
 
 uniform float offset_x;
 
-out vec3 colour;
+out vec3 color;
 
 void main() {
-    colour = vert_colour;
+    color = vert_color;
 
     vec4 vec_offset = vec4( offset_x, 0.0, 0.0, 0.0 );
-    gl_Position = vec4( vert_position, 1.0 ) + vec_offset;
+    gl_Position = vec4( vert_position, 0.0, 1.0 ) + vec_offset;
 }
