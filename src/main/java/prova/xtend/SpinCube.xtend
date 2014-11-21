@@ -20,18 +20,18 @@ import static javax.media.opengl.fixedfunc.GLMatrixFunc.*
  */
 class SpinCube implements GLEventListener
 {
-    val static SHADERS_DIR     = 'shaders'
-    val static SHADERS_BIN_DIR = SHADERS_DIR + '/bin'
-    val static SHADERS_BASE_NAME = typeof( SpinCube ).simpleName.toLowerCase
+    val static SHADERS_DIR       = 'shaders'
+    val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
+    val static SHADERS_BASE_NAME = SpinCube.simpleName.toLowerCase
 
-    val static int CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
+    val static CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
 
     // Array containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
 
-    val int[] vbos = newIntArrayOfSize( 1 )     // for Vertex Buffer Objects
-    val int[] ibos = newIntArrayOfSize( 1 )     // for Index  Buffer Objects
-    val int[] vaos = newIntArrayOfSize( 1 )     // for Vertex Array  Objects
+    val vbos = newIntArrayOfSize( 1 )       // for Vertex Buffer Objects
+    val ibos = newIntArrayOfSize( 1 )       // for Index  Buffer Objects
+    val vaos = newIntArrayOfSize( 1 )       // for Vertex Array  Objects
 
     // These vertices will be used to build a VBO to draw a cube
 
@@ -95,12 +95,12 @@ class SpinCube implements GLEventListener
 
     // Shader attributes
 
-    var int vertPosLoc          // Location of attribute "vert_position" in vertex shader
-    var int vertColorLoc        // Location of attribute "vert_color" in vertex shader
+    int vertPosLoc          // Location of attribute "vert_position" in vertex shader
+    int vertColorLoc        // Location of attribute "vert_color" in vertex shader
 
-    // Window aspect ratio
+    // Fields
 
-    var float aspect
+    float aspect            // Window aspect ratio
 
     //---- GLEventListener ----------------------------------------------------
 
@@ -131,6 +131,7 @@ class SpinCube implements GLEventListener
         // Define first uniform matrix
         val pmvMatrixUniform = new GLUniformData( 'pmvMatrix', 4, 4, pmvMatrix.glGetPMvMatrixf )
 
+        // Bind to uniform attribute in vertex shader
         sState.uniform( gl, pmvMatrixUniform )
 
         //---- Vertex Buffer Objects ----------------------
@@ -138,13 +139,13 @@ class SpinCube implements GLEventListener
         // VBO with vertex attributes
         gl.glGenBuffers( 1, vbos, 0 )
         gl.glBindBuffer( GL::GL_ARRAY_BUFFER, vbos.get( 0 ) )
-        gl.glBufferData( GL::GL_ARRAY_BUFFER, vertices.size * SIZEOF_FLOAT, newDirectFloatBuffer( vertices ), GL::GL_STATIC_DRAW )
+        gl.glBufferData( GL::GL_ARRAY_BUFFER, vertices.length * SIZEOF_FLOAT, newDirectFloatBuffer( vertices ), GL::GL_STATIC_DRAW )
         gl.glBindBuffer( GL::GL_ARRAY_BUFFER, 0 )
 
         // VBO with vertex indices
         gl.glGenBuffers( 1, ibos, 0 )
         gl.glBindBuffer( GL::GL_ELEMENT_ARRAY_BUFFER, ibos.get( 0 ) )
-        gl.glBufferData( GL::GL_ELEMENT_ARRAY_BUFFER, indices.size * SIZEOF_SHORT, newDirectShortBuffer( indices ), GL::GL_STATIC_DRAW )
+        gl.glBufferData( GL::GL_ELEMENT_ARRAY_BUFFER, indices.length * SIZEOF_SHORT, newDirectShortBuffer( indices ), GL::GL_STATIC_DRAW )
         gl.glBindBuffer( GL::GL_ELEMENT_ARRAY_BUFFER, 0 )
 
         //---- Vertex Array Objects -----------------------
@@ -225,19 +226,15 @@ class SpinCube implements GLEventListener
      */
     override display(GLAutoDrawable drawable)
     {
-        val gl = drawable.getGL().getGL3()
+        // Update world...
+        update( drawable )
 
-        // Use shaders
-        sState.useProgram( gl, true )
-
-        updateWorld( drawable )
+        // ...and render it
         render( drawable )
-
-        sState.useProgram( gl, false )
     }
 
     /**
-     * Called when the window is closed.
+     * Called once at program termination.
      */
     override dispose(GLAutoDrawable drawable)
     {
@@ -253,7 +250,7 @@ class SpinCube implements GLEventListener
     /**
      * Update world model
      */
-    def private updateWorld(GLAutoDrawable drawable)
+    def private update(GLAutoDrawable drawable)
     {
         pmvMatrix.glMatrixMode( GL_MODELVIEW )
         pmvMatrix.glLoadIdentity
@@ -268,12 +265,18 @@ class SpinCube implements GLEventListener
         pmvMatrix.update
     }
 
+    /**
+     * Render world
+     */
     def private render(GLAutoDrawable drawable)
     {
         val gl = drawable.getGL().getGL3()
 
         // Clear screen
         gl.glClear( CLEAR_BUFFER_BITS )
+
+        // Use shaders
+        sState.useProgram( gl, true )
 
         // Pass PMV matrix
         sState.uniform( gl, sState.getUniform( 'pmvMatrix' ) )
@@ -282,9 +285,12 @@ class SpinCube implements GLEventListener
         gl.glBindVertexArray( vaos.get( 0 ) )
 
         // Draw the cube!
-        gl.glDrawElements( GL::GL_TRIANGLES, indices.size, GL::GL_UNSIGNED_SHORT, 0L )      // must be GL_UNSIGNED_SHORT!
+        gl.glDrawElements( GL::GL_TRIANGLES, indices.length, GL::GL_UNSIGNED_SHORT, 0L )      // must be GL_UNSIGNED_SHORT!
 
         gl.glBindVertexArray( 0 )
+
+        // Un-use shaders
+        sState.useProgram( gl, false )
     }
 
     //---- Support methods ----------------------------------------------------
@@ -292,12 +298,12 @@ class SpinCube implements GLEventListener
     def private createShaders(GL3 gl)
     {
         // Vertex shader
-        val ShaderCode vs = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class,
-            SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
+        val vs = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR,
+            SHADERS_BASE_NAME, true )
 
         // Fragment shader
-        val ShaderCode fs = ShaderCode.create( gl, GL2ES2::GL_FRAGMENT_SHADER, this.class,
-            SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
+        val fs = ShaderCode.create( gl, GL2ES2::GL_FRAGMENT_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR,
+            SHADERS_BASE_NAME, true )
 
         // Create & Link the shader program
         val sp = new ShaderProgram
@@ -309,8 +315,5 @@ class SpinCube implements GLEventListener
         // Extract attribute locations
         vertPosLoc   = sState.getAttribLocation( gl, 'vert_position' )
         vertColorLoc = sState.getAttribLocation( gl, 'vert_color' )
-
-        println( Thread::currentThread + '   vertPosLoc: ' + vertPosLoc )
-        println( Thread::currentThread + ' vertColorLoc: ' + vertColorLoc )
     }
 }
