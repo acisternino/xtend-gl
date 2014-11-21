@@ -2,7 +2,6 @@ package prova.xtend
 
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
-import com.jogamp.opengl.util.glsl.ShaderState
 import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
@@ -17,22 +16,22 @@ import static com.jogamp.common.nio.Buffers.*
  */
 class ThreeLines implements GLEventListener
 {
-    val static SHADERS_DIR     = 'shaders'
-    val static SHADERS_BIN_DIR = SHADERS_DIR + '/bin'
+    val static SHADERS_DIR       = 'shaders'
+    val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
     val static SHADERS_BASE_NAME = ThreeLines.simpleName.toLowerCase
 
-    val static int CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
+    val static CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
 
     // Arrays containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
 
-    val int[] vbos = newIntArrayOfSize( 2 )     // for Vertex Buffer Objects
-    val int[] vaos = newIntArrayOfSize( 1 )     // for Vertex Array  Objects
+    val vbos = newIntArrayOfSize( 2 )     // for Vertex Buffer Objects
+    val vaos = newIntArrayOfSize( 1 )     // for Vertex Array  Objects
 
     // Vertices used to build a VBO and draw 3 colored lines
 
     val float[] vertices = #[
-        // X      Y  
+        // X      Y
         -0.6f, -0.6f,
          0.0f,  0.6f,
          0.7f,  0.0f,
@@ -48,12 +47,12 @@ class ThreeLines implements GLEventListener
 
     // Global OpenGL objects
 
-    val shProg = new ShaderProgram 
+    val shProg = new ShaderProgram
 
     // Shader attributes
 
-    var int vertPosLoc          // Location of attribute "vert_position" in vertex shader
-    var int vertColorLoc        // Location of attribute "vert_color" in vertex shader
+    int vertPosLoc          // Location of attribute "vert_position" in vertex shader
+    int vertColorLoc        // Location of attribute "vert_color" in vertex shader
 
     //---- GLEventListener ----------------------------------------------------
 
@@ -132,22 +131,15 @@ class ThreeLines implements GLEventListener
      */
     override display(GLAutoDrawable drawable)
     {
-        val gl = drawable.getGL().getGL3()
-
-        // Use shaders
-        shProg.useProgram( gl, true )
-
         // Update world...
         update( drawable )
 
         // ...and render it
         render( drawable )
-
-        shProg.useProgram( gl, false )
     }
 
     /**
-     *
+     * Called once at program termination.
      */
     override dispose(GLAutoDrawable drawable)
     {
@@ -158,29 +150,7 @@ class ThreeLines implements GLEventListener
         shProg.release( gl, true )
     }
 
-    //---- Support methods ----------------------------------------------------
-
-    def private createShaders(GL3 gl)
-    {
-        // Vertex shader
-        val ShaderCode vs = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class,
-            SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
-
-        // Fragment shader
-        val ShaderCode fs = ShaderCode.create( gl, GL2ES2::GL_FRAGMENT_SHADER, this.class,
-            SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
-
-        // Create & Link the shader program
-        shProg.add( gl, vs, System.err )
-        shProg.add( gl, fs, System.err )
-        shProg.link( gl, System.err )
-
-        // Extract attribute locations
-        vertPosLoc   = gl.glGetAttribLocation( shProg.program, 'vert_position' )
-        vertColorLoc = gl.glGetAttribLocation( shProg.program, 'vert_color' )
-    }
-
-    //---- Private methods ----------------------------------------------------
+    //---- Rendering methods --------------------------------------------------
 
     def private update(GLAutoDrawable drawable)
     {
@@ -194,6 +164,9 @@ class ThreeLines implements GLEventListener
         // Clear screen
         gl.glClear( CLEAR_BUFFER_BITS )
 
+        // Use shaders
+        shProg.useProgram( gl, true )
+
         // Bind VAO
         gl.glBindVertexArray( vaos.get( 0 ) )
 
@@ -202,5 +175,30 @@ class ThreeLines implements GLEventListener
 
         // Unbind VAO
         gl.glBindVertexArray( 0 )
+
+        // Un-use shaders
+        shProg.useProgram( gl, false )
+    }
+
+    //---- Support methods ----------------------------------------------------
+
+    def private createShaders(GL3 gl)
+    {
+        // Vertex shader
+        val vs = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR,
+            SHADERS_BASE_NAME, true )
+
+        // Fragment shader
+        val fs = ShaderCode.create( gl, GL2ES2::GL_FRAGMENT_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR,
+            SHADERS_BASE_NAME, true )
+
+        // Create & Link the shader program
+        shProg.add( gl, vs, System.err )
+        shProg.add( gl, fs, System.err )
+        shProg.link( gl, System.err )
+
+        // Extract attribute locations
+        vertPosLoc   = gl.glGetAttribLocation( shProg.program, 'vert_position' )
+        vertColorLoc = gl.glGetAttribLocation( shProg.program, 'vert_color' )
     }
 }
