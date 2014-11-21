@@ -13,7 +13,7 @@ import javax.media.opengl.GLPipelineFactory
 import static com.jogamp.common.nio.Buffers.*
 
 /**
- *
+ * Draw three colored lines in GL_LINE_STRIP mode.
  */
 class ThreeLines implements GLEventListener
 {
@@ -23,13 +23,13 @@ class ThreeLines implements GLEventListener
 
     val static int CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
 
-    // Array containing buffer and vertex indices (i.e. names).
+    // Arrays containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
 
     val int[] vbos = newIntArrayOfSize( 2 )     // for Vertex Buffer Objects
     val int[] vaos = newIntArrayOfSize( 1 )     // for Vertex Array  Objects
 
-    // These points will be used to build a VBO and draw 3 lines
+    // Vertices used to build a VBO and draw 3 colored lines
 
     val float[] vertices = #[
         // X      Y  
@@ -48,7 +48,7 @@ class ThreeLines implements GLEventListener
 
     // Global OpenGL objects
 
-    val sState = new ShaderState
+    val shProg = new ShaderProgram 
 
     // Shader attributes
 
@@ -71,7 +71,7 @@ class ThreeLines implements GLEventListener
         //---- Shaders ------------------------------------
 
         createShaders( gl )
-        sState.useProgram( gl, true )
+        shProg.useProgram( gl, true )
 
         //---- Vertex Buffer Objects ----------------------
 
@@ -116,7 +116,7 @@ class ThreeLines implements GLEventListener
         // Clear screen to grey
         gl.glClearColor( 0.3f, 0.3f, 0.3f, 0f )
 
-        sState.useProgram( gl, false )
+        shProg.useProgram( gl, false )
     }
 
     /**
@@ -135,7 +135,7 @@ class ThreeLines implements GLEventListener
         val gl = drawable.getGL().getGL3()
 
         // Use shaders
-        sState.useProgram( gl, true )
+        shProg.useProgram( gl, true )
 
         // Update world...
         update( drawable )
@@ -143,7 +143,7 @@ class ThreeLines implements GLEventListener
         // ...and render it
         render( drawable )
 
-        sState.useProgram( gl, false )
+        shProg.useProgram( gl, false )
     }
 
     /**
@@ -155,7 +155,7 @@ class ThreeLines implements GLEventListener
 
         val gl = drawable.GL.getGL3
 
-        sState.destroy( gl )
+        shProg.release( gl, true )
     }
 
     //---- Support methods ----------------------------------------------------
@@ -171,15 +171,13 @@ class ThreeLines implements GLEventListener
             SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
 
         // Create & Link the shader program
-        val sp = new ShaderProgram
-        sp.add( gl, vs, System.err )
-        sp.add( gl, fs, System.err )
-
-        sState.attachShaderProgram( gl, sp, true )
+        shProg.add( gl, vs, System.err )
+        shProg.add( gl, fs, System.err )
+        shProg.link( gl, System.err )
 
         // Extract attribute locations
-        vertPosLoc   = sState.getAttribLocation( gl, 'vert_position' )
-        vertColorLoc = sState.getAttribLocation( gl, 'vert_color' )
+        vertPosLoc   = gl.glGetAttribLocation( shProg.program, 'vert_position' )
+        vertColorLoc = gl.glGetAttribLocation( shProg.program, 'vert_color' )
     }
 
     //---- Private methods ----------------------------------------------------
