@@ -14,6 +14,7 @@ class Main {
     }
 
     val demos = #{
+        'threelines'   -> ThreeLines,
         'onetriangle'  -> OneTriangle,
         'animtriangle' -> AnimTriangle,
         'onecube'      -> OneCube,
