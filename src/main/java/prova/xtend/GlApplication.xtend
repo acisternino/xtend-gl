@@ -1,5 +1,6 @@
 package prova.xtend
 
+import com.google.common.collect.Queues
 import com.jogamp.newt.NewtFactory
 import com.jogamp.newt.event.WindowAdapter
 import com.jogamp.newt.event.WindowEvent
@@ -46,8 +47,10 @@ class GlApplication
 
         val glWindow = GLWindow.create( screen, caps )
 
-        val quitAdapter = new QuitAdapter
-        
+        val eventQueue = Queues.<Integer>newLinkedBlockingQueue
+
+        val quitAdapter = new QuitAdapter( eventQueue )
+
         glWindow.addKeyListener( quitAdapter )
         glWindow.addWindowListener( quitAdapter )
 
@@ -75,6 +78,14 @@ class GlApplication
         println( '[' + Thread::currentThread + '] Starting FPSAnimator' )
         animator.start()
 
+        // New the Animator is running is its own thread driving the
+        // GLEventListener instance
+
+        // GUI Events are handled by another thread.
+        var Integer event 
+        while ( ( event = eventQueue.take ) != 122 ) {
+            println( '[' + Thread::currentThread + '] event received: ' + event )
+        }
         println( '[' + Thread::currentThread + '] End of runNewt()' )
     }
 

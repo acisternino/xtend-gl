@@ -4,6 +4,7 @@ import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.event.WindowAdapter
 import com.jogamp.newt.event.WindowEvent
+import java.util.concurrent.BlockingQueue
 import org.eclipse.xtend.lib.annotations.Accessors
 
 import static java.lang.System.err
@@ -13,8 +14,16 @@ import static java.lang.System.err
  */
 class QuitAdapter extends WindowAdapter implements KeyListener
 {
+    val static char QUIT_KEY = 'q'      // needed to create a real char instead of a String
+
     @Accessors
     boolean shouldQuit
+    
+    val BlockingQueue<Integer> eventQueue
+    
+    new(BlockingQueue<Integer> eventQueue) {
+        this.eventQueue = eventQueue
+    }
 
     override windowDestroyed(WindowEvent we) {
         err.println( '[' + Thread::currentThread + '] QUIT Window' )
@@ -28,10 +37,10 @@ class QuitAdapter extends WindowAdapter implements KeyListener
         if ( !ke.printableKey || ke.autoRepeat ) {
             return
         }
-        if ( ke.keyChar == 'q' ) {
+        eventQueue.put( new Integer( ke.keyChar ) )
+        if ( ke.keyChar == QUIT_KEY ) {
             err.println( '[' + Thread::currentThread + '] QUIT Key' )
             shouldQuit = true
         }
     }
-
 }
