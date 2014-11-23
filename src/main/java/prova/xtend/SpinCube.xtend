@@ -109,7 +109,7 @@ class SpinCube implements GLEventListener
      */
     override init(GLAutoDrawable drawable)
     {
-        println( 'init' )
+        println( '[' + Thread::currentThread + '] GLEventListener init()' )
 
         // Activate debug pipeline
         var gl = drawable.GL.getGL3
@@ -198,7 +198,7 @@ class SpinCube implements GLEventListener
      */
     override reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
     {
-        println( 'reshape' )
+        println( '[' + Thread::currentThread + '] GLEventListener reshape()' )
 
         val gl = drawable.GL.getGL3
 
@@ -238,7 +238,7 @@ class SpinCube implements GLEventListener
      */
     override dispose(GLAutoDrawable drawable)
     {
-        println( 'dispose' )
+        println( '[' + Thread::currentThread + '] GLEventListener dispose()' )
 
         val gl = drawable.GL.getGL3
 

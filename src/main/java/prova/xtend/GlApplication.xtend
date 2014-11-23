@@ -29,8 +29,8 @@ class GlApplication
         width  = w
         height = h
 
-        println( 'GL Profile name: ' + glp.name )
-        
+        println( '[' + Thread::currentThread + '] GL Profile name: ' + glp.name )
+
         demo = demoClass.newInstance
     }
 
@@ -39,12 +39,17 @@ class GlApplication
      */
     def runNewt(String demoName)
     {
-        println( 'runNewt()' )
+        println( '[' + Thread::currentThread + '] runNewt()' )
 
         val display = NewtFactory.createDisplay( null )
         val screen  = NewtFactory.createScreen( display, 0 )
 
         val glWindow = GLWindow.create( screen, caps )
+
+        val quitAdapter = new QuitAdapter
+        
+        glWindow.addKeyListener( quitAdapter )
+        glWindow.addWindowListener( quitAdapter )
 
         // Animator that call the window's display() method 30 times per second
         val animator = new FPSAnimator( glWindow, 30 )
@@ -67,7 +72,10 @@ class GlApplication
             }
         } )
 
+        println( '[' + Thread::currentThread + '] Starting FPSAnimator' )
         animator.start()
+
+        println( '[' + Thread::currentThread + '] End of runNewt()' )
     }
 
 }
