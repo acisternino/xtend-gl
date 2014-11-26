@@ -7,6 +7,7 @@ import javax.media.opengl.FPSCounter
 import javax.media.opengl.GLCapabilities
 import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLProfile
+import prova.xtend.util.QuitAdapter
 
 /**
  * Runs the demo class provided at construction time.
