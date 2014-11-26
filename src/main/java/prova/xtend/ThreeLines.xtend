@@ -61,11 +61,16 @@ class ThreeLines implements GLEventListener
      */
     override init(GLAutoDrawable drawable)
     {
-        println( 'init' )
+        println( '[' + Thread::currentThread + '] GLEventListener init()' )
 
-        // Activate debug pipeline
+        // Activate Debug pipeline
         var gl = drawable.GL.getGL3
-        gl = gl.context.setGL( GLPipelineFactory.create( 'javax.media.opengl.Debug', GL3, gl, null ) ) as GL3
+        try {
+            gl = gl.context.setGL( GLPipelineFactory.create( 'javax.media.opengl.Debug', GL3, gl, null ) ) as GL3
+        }
+        catch ( Exception ex ) {
+            ex.printStackTrace
+        }
 
         //---- Shaders ------------------------------------
 
@@ -123,7 +128,7 @@ class ThreeLines implements GLEventListener
      */
     override reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
     {
-        println( 'reshape' )
+        println( '[' + Thread::currentThread + '] GLEventListener reshape()' )
     }
 
     /**
@@ -143,7 +148,7 @@ class ThreeLines implements GLEventListener
      */
     override dispose(GLAutoDrawable drawable)
     {
-        println( 'dispose' )
+        println( '[' + Thread::currentThread + '] GLEventListener dispose()' )
 
         val gl = drawable.GL.getGL3
 
