@@ -1,9 +1,6 @@
 package prova.xtend
 
-import com.google.common.collect.Queues
 import com.jogamp.newt.NewtFactory
-import com.jogamp.newt.event.WindowAdapter
-import com.jogamp.newt.event.WindowEvent
 import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.FPSAnimator
 import javax.media.opengl.FPSCounter
@@ -47,45 +44,36 @@ class GlApplication
 
         val glWindow = GLWindow.create( screen, caps )
 
-        val eventQueue = Queues.<Integer>newLinkedBlockingQueue
-
-        val quitAdapter = new QuitAdapter( eventQueue )
-
-        glWindow.addKeyListener( quitAdapter )
-        glWindow.addWindowListener( quitAdapter )
-
         // Animator that call the window's display() method 30 times per second
         val animator = new FPSAnimator( glWindow, 30 )
+
+        // Quits when pressing 'Q' or closing the window
+        val quitAdapter = new QuitAdapter
+        
+        glWindow.addKeyListener( quitAdapter )
+        glWindow.addWindowListener( quitAdapter )
 
         glWindow.setTitle( demoName )
         glWindow.setSize( width, height )
         glWindow.setVisible( true )
         glWindow.setUpdateFPSFrames( FPSCounter::DEFAULT_FRAMES_PER_INTERVAL, System.err )
 
+        // The chosen demo (an instance of GLEventListener) 
         glWindow.addGLEventListener( demo )
 
-        glWindow.addWindowListener( new WindowAdapter {
-            override windowDestroyed(WindowEvent ev) {
-                // Use a dedicate thread to run the stop() to ensure that the
-                // animator stops before program exits.
-                new Thread( [
-                    animator.stop()
-                    System.exit( 0 )
-                ] ).start()
-            }
-        } )
-
         println( '[' + Thread::currentThread + '] Starting FPSAnimator' )
-        animator.start()
+        animator.start
 
-        // New the Animator is running is its own thread driving the
-        // GLEventListener instance
-
-        // GUI Events are handled by another thread.
-        var Integer event 
-        while ( ( event = eventQueue.take ) != 122 ) {
-            println( '[' + Thread::currentThread + '] event received: ' + event )
+        // Wait for events
+        while ( !quitAdapter.shouldQuit && animator.animating ) {
+            Thread.sleep( 100 )
         }
+
+        new Thread([
+            animator.stop
+            glWindow.destroy
+        ]).start
+
         println( '[' + Thread::currentThread + '] End of runNewt()' )
     }
 
