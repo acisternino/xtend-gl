@@ -111,9 +111,14 @@ class SpinCube implements GLEventListener
     {
         println( 'init' )
 
-        // Activate debug pipeline
+        // Activate Debug pipeline
         var gl = drawable.GL.getGL3
-        gl = gl.context.setGL( GLPipelineFactory.create( 'javax.media.opengl.Debug', GL3, gl, null ) ) as GL3
+        try {
+            gl = gl.context.setGL( GLPipelineFactory.create( 'javax.media.opengl.Debug', GL3, gl, null ) ) as GL3
+        }
+        catch ( Exception ex ) {
+            ex.printStackTrace
+        }
 
         //---- Shaders ------------------------------------
 
