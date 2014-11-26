@@ -1,4 +1,4 @@
-package prova.xtend
+package prova.xtend.util
 
 import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.KeyListener
