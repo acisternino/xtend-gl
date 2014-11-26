@@ -1,8 +1,6 @@
 package prova.xtend
 
 import com.jogamp.newt.NewtFactory
-import com.jogamp.newt.event.WindowAdapter
-import com.jogamp.newt.event.WindowEvent
 import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.FPSAnimator
 import javax.media.opengl.FPSCounter
@@ -29,8 +27,8 @@ class GlApplication
         width  = w
         height = h
 
-        println( 'GL Profile name: ' + glp.name )
-        
+        println( '[' + Thread::currentThread + '] GL Profile name: ' + glp.name )
+
         demo = demoClass.newInstance
     }
 
@@ -39,7 +37,7 @@ class GlApplication
      */
     def runNewt(String demoName)
     {
-        println( 'runNewt()' )
+        println( '[' + Thread::currentThread + '] runNewt()' )
 
         val display = NewtFactory.createDisplay( null )
         val screen  = NewtFactory.createScreen( display, 0 )
@@ -49,25 +47,34 @@ class GlApplication
         // Animator that call the window's display() method 30 times per second
         val animator = new FPSAnimator( glWindow, 30 )
 
+        // Quits when pressing 'Q' or closing the window
+        val quitAdapter = new QuitAdapter
+        
+        glWindow.addKeyListener( quitAdapter )
+        glWindow.addWindowListener( quitAdapter )
+
         glWindow.setTitle( demoName )
         glWindow.setSize( width, height )
         glWindow.setVisible( true )
         glWindow.setUpdateFPSFrames( FPSCounter::DEFAULT_FRAMES_PER_INTERVAL, System.err )
 
+        // The chosen demo (an instance of GLEventListener) 
         glWindow.addGLEventListener( demo )
 
-        glWindow.addWindowListener( new WindowAdapter {
-            override windowDestroyed(WindowEvent ev) {
-                // Use a dedicate thread to run the stop() to ensure that the
-                // animator stops before program exits.
-                new Thread( [
-                    animator.stop()
-                    System.exit( 0 )
-                ] ).start()
-            }
-        } )
+        println( '[' + Thread::currentThread + '] Starting FPSAnimator' )
+        animator.start
 
-        animator.start()
+        // Wait for events
+        while ( !quitAdapter.shouldQuit && animator.animating ) {
+            Thread.sleep( 100 )
+        }
+
+        new Thread([
+            animator.stop
+            glWindow.destroy
+        ]).start
+
+        println( '[' + Thread::currentThread + '] End of runNewt()' )
     }
 
 }
