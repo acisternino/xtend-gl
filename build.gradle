@@ -1,5 +1,5 @@
 plugins {
-    id 'org.xtend.xtend' version '0.3.2'    // applies also eclipse
+    id 'org.xtend.xtend' version '0.3.3'    // applies also eclipse
 }
 
 apply plugin: 'application'
