@@ -275,7 +275,7 @@ class SpinCube implements GLEventListener
      */
     def private render(GLAutoDrawable drawable)
     {
-        val gl = drawable.getGL().getGL3()
+        val gl = drawable.GL.getGL3
 
         // Clear screen
         gl.glClear( CLEAR_BUFFER_BITS )
