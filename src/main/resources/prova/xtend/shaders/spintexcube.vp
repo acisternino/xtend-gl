@@ -1,0 +1,21 @@
+#version 150
+
+in  vec3 vert_position;
+in  vec2 vert_tex_coord;
+
+uniform mat4 pmvMatrix[2];
+
+out vec2 frag_tex_coord;
+
+void main() {
+
+    // Texture coordinates
+    frag_tex_coord = vert_tex_coord;
+
+    /*
+     *  The standard transformation for a vertex in a Vertex Shader is:
+     *
+     *  gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+     */
+    gl_Position = pmvMatrix[0] * pmvMatrix[1] * vec4( vert_position, 1.0 );
+}
