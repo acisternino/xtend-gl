@@ -1,12 +1,12 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLPipelineFactory
 
 import static com.jogamp.common.nio.Buffers.*
@@ -15,7 +15,7 @@ import static java.lang.Math.sin
 /**
  * Draws an animated triangle in 2D.
  */
-class AnimTriangle implements GLEventListener
+class AnimTriangle extends GlDemo
 {
     val static SHADERS_DIR       = 'shaders'
     val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
@@ -209,4 +209,8 @@ class AnimTriangle implements GLEventListener
 
         offsetLoc = gl.glGetUniformLocation( shProg.program, 'offset_x' )
     }
+
+    override setWindow(GLWindow window) {
+    }
+
 }

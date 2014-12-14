@@ -1,5 +1,6 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import com.jogamp.opengl.util.glsl.ShaderState
@@ -8,14 +9,13 @@ import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 
 import static com.jogamp.common.nio.Buffers.*
 
 /**
  *
  */
-class OneCube implements GLEventListener
+class OneCube extends GlDemo
 {
     val static SHADERS_DIR     = 'shaders'
     val static SHADERS_BIN_DIR = SHADERS_DIR + '/bin'
@@ -233,4 +233,8 @@ class OneCube implements GLEventListener
 
         sState.useProgram( gl, true )
     }
+    
+    override setWindow(GLWindow window) {
+    }
+    
 }

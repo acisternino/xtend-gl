@@ -1,0 +1,7 @@
+[Thread[main,5,main]] GL Profile name: GL3
+[Thread[main,5,main]] runNewt()
+[Thread[main,5,main]] Starting FPSAnimator
+[Thread[main-FPSAWTAnimator#00-Timer0,5,main]] GLEventListener init()
+[Thread[main-FPSAWTAnimator#00-Timer0,5,main]] GLEventListener reshape()
+[Thread[main,5,main]] End of runNewt()
+[Thread[main-Display-.windows_nil-1-EDT-1,5,main]] GLEventListener dispose()

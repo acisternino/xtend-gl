@@ -1,12 +1,12 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLPipelineFactory
 
 import static com.jogamp.common.nio.Buffers.*
@@ -14,7 +14,7 @@ import static com.jogamp.common.nio.Buffers.*
 /**
  * Draw three colored lines in GL_LINE_STRIP mode.
  */
-class ThreeLines implements GLEventListener
+class ThreeLines extends GlDemo
 {
     val static SHADERS_DIR       = 'shaders'
     val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
@@ -206,4 +206,8 @@ class ThreeLines implements GLEventListener
         vertPosLoc   = gl.glGetAttribLocation( shProg.program, 'vert_position' )
         vertColorLoc = gl.glGetAttribLocation( shProg.program, 'vert_color' )
     }
+    
+    override setWindow(GLWindow window) {
+    }
+    
 }

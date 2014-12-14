@@ -9,10 +9,6 @@ import static java.lang.System.*
  */
 class Main {
 
-    def static void main(String[] args) {
-        new Main().run(args)
-    }
-
     val demos = #{
         'threelines'   -> ThreeLines,
         'onetriangle'  -> OneTriangle,
@@ -20,11 +16,17 @@ class Main {
         'animtriangle' -> AnimTriangle,
         'onecube'      -> OneCube,
         'spincube'     -> SpinCube,
-        'spintexcube'  -> SpinTexCube
+        'spintexcube'  -> SpinTexCube,
+        'spintexcube2' -> SpinTexCube2
     }
 
-    def run(String[] args) {
+    def static void main(String[] args)
+    {
+        new Main().run(args)
+    }
 
+    def run(String[] args)
+    {
         val demoClass = parseArgs( args )
         
         // call very early as suggested by the docs
@@ -35,8 +37,8 @@ class Main {
         app.runNewt( 'OpenGL Demo: ' + demoClass.simpleName )
     }
 
-    def private parseArgs(String[] args) {
-
+    def private parseArgs(String[] args)
+    {
         if ( args.length == 0 ) {
             err.println( "Missing argument" )
             exit( 1 )

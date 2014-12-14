@@ -1,5 +1,6 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.PMVMatrix
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
@@ -10,7 +11,6 @@ import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLPipelineFactory
 import javax.media.opengl.GLUniformData
 
@@ -21,7 +21,7 @@ import static javax.media.opengl.fixedfunc.GLMatrixFunc.*
 /**
  * Spinning textured cube.
  */
-class SpinTexCube implements GLEventListener
+class SpinTexCube extends GlDemo
 {
     val static SHADERS_DIR       = 'shaders'
     val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
@@ -375,4 +375,8 @@ class SpinTexCube implements GLEventListener
 
         textureUniformLoc = sState.getUniformLocation( gl, 'tex' )
     }
+    
+    override setWindow(GLWindow window) {
+    }
+    
 }

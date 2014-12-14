@@ -1,5 +1,6 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import com.jogamp.opengl.util.glsl.ShaderState
@@ -7,7 +8,6 @@ import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLPipelineFactory
 
 import static com.jogamp.common.nio.Buffers.*
@@ -15,7 +15,7 @@ import static com.jogamp.common.nio.Buffers.*
 /**
  * Simple 2D colored triangle.
  */
-class OneTriangle implements GLEventListener
+class OneTriangle extends GlDemo
 {
     val static SHADERS_DIR     = 'shaders'
     val static SHADERS_BIN_DIR = SHADERS_DIR + '/bin'
@@ -207,6 +207,9 @@ class OneTriangle implements GLEventListener
         // Extract attribute locations
         vertPosLoc   = sState.getAttribLocation( gl, 'vert_position' )
         vertColorLoc = sState.getAttribLocation( gl, 'vert_color' )
+    }
+    
+    override setWindow(GLWindow window) {
     }
 
 }

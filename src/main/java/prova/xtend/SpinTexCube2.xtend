@@ -1,10 +1,14 @@
 package prova.xtend
 
+import com.jogamp.newt.event.KeyEvent
+import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.PMVMatrix
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import com.jogamp.opengl.util.glsl.ShaderState
+import com.jogamp.opengl.util.texture.TextureData
+import com.jogamp.opengl.util.texture.TextureIO
 import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
@@ -12,19 +16,22 @@ import javax.media.opengl.GLAutoDrawable
 import javax.media.opengl.GLPipelineFactory
 import javax.media.opengl.GLUniformData
 
+import static com.google.common.io.Resources.*
 import static com.jogamp.common.nio.Buffers.*
 import static javax.media.opengl.fixedfunc.GLMatrixFunc.*
 
 /**
- * Spinning cube.
+ * Spinning textured cube.
  */
-class SpinCube extends GlDemo
+class SpinTexCube2 extends GlDemo implements KeyListener
 {
     val static SHADERS_DIR       = 'shaders'
     val static SHADERS_BIN_DIR   = SHADERS_DIR + '/bin'
-    val static SHADERS_BASE_NAME = SpinCube.simpleName.toLowerCase
+    val static SHADERS_BASE_NAME = SpinTexCube2.simpleName.toLowerCase
 
     val static CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
+
+    val static TEXTURE_NAME = 'Wood_texture_by_shadowh3.jpg'
 
     // Array containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
@@ -32,39 +39,41 @@ class SpinCube extends GlDemo
     val vbos = newIntArrayOfSize( 1 )       // for Vertex Buffer Objects
     val ibos = newIntArrayOfSize( 1 )       // for Index  Buffer Objects
     val vaos = newIntArrayOfSize( 1 )       // for Vertex Array  Objects
+    val texs = newIntArrayOfSize( 1 )       // for Texture       Objects
 
     // These vertices will be used to build a VBO to draw a cube
 
     val float[] vertices = #[
-         1f,  1f,  1f,      1f, 0f, 0f,    //  0 red
-         1f,  1f, -1f,      1f, 0f, 0f,    //  1 red
-         1f, -1f, -1f,      1f, 0f, 0f,    //  2 red
-         1f, -1f,  1f,      1f, 0f, 0f,    //  3 red
+    //   X    Y    Z      S   T
+         1f,  1f,  1f,    0f, 0f,   //  0
+         1f,  1f, -1f,    1f, 0f,   //  1
+         1f, -1f, -1f,    1f, 1f,   //  2
+         1f, -1f,  1f,    0f, 1f,   //  3
 
-         1f, -1f,  1f,      0f, 1f, 0f,    //  4 green
-         1f,  1f,  1f,      0f, 1f, 0f,    //  5 green
-        -1f,  1f,  1f,      0f, 1f, 0f,    //  6 green
-        -1f, -1f,  1f,      0f, 1f, 0f,    //  7 green
+         1f, -1f,  1f,    0f, 0f,   //  4
+         1f,  1f,  1f,    1f, 0f,   //  5
+        -1f,  1f,  1f,    1f, 1f,   //  6
+        -1f, -1f,  1f,    0f, 1f,   //  7
 
-        -1f, -1f,  1f,      0f, 0f, 1f,    //  8 blue
-        -1f, -1f, -1f,      0f, 0f, 1f,    //  9 blue
-        -1f,  1f, -1f,      0f, 0f, 1f,    // 10 blue
-        -1f,  1f,  1f,      0f, 0f, 1f,    // 11 blue
+        -1f, -1f,  1f,    0f, 0f,   //  8
+        -1f, -1f, -1f,    1f, 0f,   //  9
+        -1f,  1f, -1f,    1f, 1f,   // 10
+        -1f,  1f,  1f,    0f, 1f,   // 11
 
-        -1f,  1f,  1f,      1f, 1f, 0f,    // 12 yellow
-         1f,  1f,  1f,      1f, 1f, 0f,    // 13 yellow
-         1f,  1f, -1f,      1f, 1f, 0f,    // 14 yellow
-        -1f,  1f, -1f,      1f, 1f, 0f,    // 15 yellow
+        -1f,  1f,  1f,    0f, 0f,   // 12
+         1f,  1f,  1f,    1f, 0f,   // 13
+         1f,  1f, -1f,    1f, 1f,   // 14
+        -1f,  1f, -1f,    0f, 1f,   // 15
 
-        -1f,  1f, -1f,      1f, 0f, 1f,    // 16 magenta
-         1f,  1f, -1f,      1f, 0f, 1f,    // 17 magenta
-         1f, -1f, -1f,      1f, 0f, 1f,    // 18 magenta
-        -1f, -1f, -1f,      1f, 0f, 1f,    // 19 magenta
+        -1f,  1f, -1f,    0f, 0f,   // 16
+         1f,  1f, -1f,    1f, 0f,   // 17
+         1f, -1f, -1f,    1f, 1f,   // 18
+        -1f, -1f, -1f,    0f, 1f,   // 19
 
-        -1f, -1f, -1f,      0f, 1f, 1f,    // 20 cyan
-         1f, -1f, -1f,      0f, 1f, 1f,    // 21 cyan
-         1f, -1f,  1f,      0f, 1f, 1f,    // 22 cyan
-        -1f, -1f,  1f,      0f, 1f, 1f     // 23 cyan
+        -1f, -1f, -1f,    0f, 0f,   // 20
+         1f, -1f, -1f,    1f, 0f,   // 21
+         1f, -1f,  1f,    1f, 1f,   // 22
+        -1f, -1f,  1f,    0f, 1f    // 23
     ]
 
     val short[] indices = #[
@@ -93,14 +102,22 @@ class SpinCube extends GlDemo
 
     val pmvMatrix = new PMVMatrix
 
+    var TextureData texData
+
     // Shader attributes
 
-    int vertPosLoc          // Location of attribute "vert_position" in vertex shader
-    int vertColorLoc        // Location of attribute "vert_color" in vertex shader
+    int vertPosLoc              // Location of attribute "vert_position" in vertex shader
+    int vertTexCoordLoc         // Location of attribute "vert_tex_coord" in vertex shader
+
+    int textureUniformLoc       // Location of the "tex" texture uniform in fragment shader
 
     // Fields
 
-    float aspect            // Window aspect ratio
+    float aspect                // Window aspect ratio
+
+    var volatile rotation = 1   // Rotation direction changed by pressing 'r'
+
+    var angle = 0
 
     //---- GLEventListener ----------------------------------------------------
 
@@ -109,7 +126,7 @@ class SpinCube extends GlDemo
      */
     override init(GLAutoDrawable drawable)
     {
-        println( '[' + Thread::currentThread + '] GLEventListener init()' )
+        println( Thread::currentThread + ' - GLEventListener init()' )
 
         // Activate Debug pipeline
         var gl = drawable.GL.getGL3
@@ -124,6 +141,40 @@ class SpinCube extends GlDemo
 
         createShaders( gl )
         sState.useProgram( gl, true )
+
+        //---- Texture ------------------------------------
+
+        // Load image file (specify the texture type to automatically handle vertical flipping)
+        val image = newInputStreamSupplier( getResource( TexTriangle, TEXTURE_NAME ) ).input
+        texData = TextureIO::newTextureData( gl.GLProfile, image, false, TextureIO::JPG )
+
+        // Create texture object
+        gl.glGenTextures( 1, texs, 0 )
+
+        gl.glActiveTexture( GL::GL_TEXTURE0 )           // Texture Unit 0
+        gl.glBindTexture( GL::GL_TEXTURE_2D, texs.get( 0 ) )
+
+        // Load texture data
+        gl.glTexImage2D( GL::GL_TEXTURE_2D, 0,
+            texData.internalFormat,
+            texData.width,
+            texData.height,
+            0,
+            texData.pixelFormat,
+            texData.pixelType,
+            texData.buffer
+        )
+
+        // Specify matching Uniform for this texture
+        gl.glUniform1i( textureUniformLoc, 0 )
+
+        // Define parameters for currently bound texture
+        gl.glTexParameteri( GL::GL_TEXTURE_2D, GL::GL_TEXTURE_WRAP_S,     GL::GL_REPEAT )
+        gl.glTexParameteri( GL::GL_TEXTURE_2D, GL::GL_TEXTURE_WRAP_T,     GL::GL_REPEAT )
+        gl.glTexParameteri( GL::GL_TEXTURE_2D, GL::GL_TEXTURE_MIN_FILTER, GL::GL_LINEAR )
+        gl.glTexParameteri( GL::GL_TEXTURE_2D, GL::GL_TEXTURE_MAG_FILTER, GL::GL_LINEAR )
+
+        //gl.glBindTexture( GL::GL_TEXTURE_2D, 0 )
 
         //---- PMV matrix ---------------------------------
 
@@ -161,7 +212,7 @@ class SpinCube extends GlDemo
         // Bind VAO to Context in order to capture state
         gl.glBindVertexArray( vaos.get( 0 ) )
 
-        val stride = 6 * SIZEOF_FLOAT       // six float attributes per vertex: x,y,z, r,g,b
+        val stride = 5 * SIZEOF_FLOAT       // five float attributes per vertex: x,y,z, s,t
 
         // Define structure of vertices VBO
         gl.glBindBuffer( GL::GL_ARRAY_BUFFER, vbos.get( 0 ) )
@@ -169,13 +220,11 @@ class SpinCube extends GlDemo
         gl.glEnableVertexAttribArray( vertPosLoc )
         gl.glVertexAttribPointer( vertPosLoc,   3, GL::GL_FLOAT, false, stride, 0 )
 
-        gl.glEnableVertexAttribArray( vertColorLoc )
-        gl.glVertexAttribPointer( vertColorLoc, 3, GL::GL_FLOAT, false, stride, ( 3 * SIZEOF_FLOAT ) )
+        gl.glEnableVertexAttribArray( vertTexCoordLoc )
+        gl.glVertexAttribPointer( vertTexCoordLoc, 2, GL::GL_FLOAT, false, stride, ( 3 * SIZEOF_FLOAT ) )
 
         // Attach Vertex Index Object to VAO
         gl.glBindBuffer( GL::GL_ELEMENT_ARRAY_BUFFER, ibos.get( 0 ) )
-
-        gl.glBindVertexArray( 0 )
 
         //---- General setup ------------------------------
 
@@ -192,10 +241,14 @@ class SpinCube extends GlDemo
         gl.glCullFace( GL::GL_BACK )            // remove back-faces
         gl.glFrontFace( GL::GL_CW )             // front is clockwise
 
+        //---- Reset state --------------------------------
+
+        gl.glBindVertexArray( 0 )
+        gl.glBindTexture( GL::GL_TEXTURE_2D, 0 )
         sState.useProgram( gl, false )
 
         // Show the completed shader state
-        println( Thread::currentThread + ' ' + sState )
+        println( Thread::currentThread + ' - ' + sState )
     }
 
     /**
@@ -203,7 +256,7 @@ class SpinCube extends GlDemo
      */
     override reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
     {
-        println( '[' + Thread::currentThread + '] GLEventListener reshape()' )
+        println( Thread::currentThread + ' - GLEventListener reshape()' )
 
         val gl = drawable.GL.getGL3
 
@@ -243,7 +296,7 @@ class SpinCube extends GlDemo
      */
     override dispose(GLAutoDrawable drawable)
     {
-        println( '[' + Thread::currentThread + '] GLEventListener dispose()' )
+        println( Thread::currentThread + ' - GLEventListener dispose()' )
 
         val gl = drawable.GL.getGL3
 
@@ -260,13 +313,16 @@ class SpinCube extends GlDemo
         pmvMatrix.glMatrixMode( GL_MODELVIEW )
         pmvMatrix.glLoadIdentity
 
-        pmvMatrix.glTranslatef( 0f, 0f, -7f )      // move back object along z axis
+        // Move back object along z axis
+        pmvMatrix.glTranslatef( 0f, 0f, -7f )
 
-        // With an FPSAnimator we can use only frames
-        var ang = drawable.animator.totalFPSFrames * 2.5f
+        // update rotation angle
+        angle = angle + ( rotation * 2 )
 
-        pmvMatrix.glRotatef( ang, 0f, 0f, 1f )
-        pmvMatrix.glRotatef( ang, 0f, 1f, 0f )
+        // Rotate it along Z and Y axes
+        pmvMatrix.glRotatef( angle, 0f, 0f, 1f )
+        pmvMatrix.glRotatef( angle, 0f, 1f, 0f )
+
         pmvMatrix.update
     }
 
@@ -283,19 +339,39 @@ class SpinCube extends GlDemo
         // Use shaders
         sState.useProgram( gl, true )
 
-        // Pass PMV matrix
+        // Pass PMV matrix to shaders
         sState.uniform( gl, sState.getUniform( 'pmvMatrix' ) )
 
-        // Bind VAO
+        // Bind VAO & Texture
         gl.glBindVertexArray( vaos.get( 0 ) )
+        gl.glBindTexture( GL::GL_TEXTURE_2D, texs.get( 0 ) )
 
         // Draw the cube!
         gl.glDrawElements( GL::GL_TRIANGLES, indices.length, GL::GL_UNSIGNED_SHORT, 0L )      // must be GL_UNSIGNED_SHORT!
 
+        // Clean-up
+        gl.glBindTexture( GL::GL_TEXTURE_2D, 0 )
         gl.glBindVertexArray( 0 )
 
-        // Un-use shaders
         sState.useProgram( gl, false )
+    }
+
+    //---- KeyListener --------------------------------------------------------
+
+    override keyPressed(KeyEvent ke)
+    {
+        println( Thread::currentThread + ' - keyPressed: ' + ke )
+        if ( !ke.printableKey || ke.autoRepeat ) {
+            return
+        }
+        if ( ke.keySymbol == KeyEvent::VK_R ) {
+            rotation *= -1
+        }
+    }
+
+    override keyReleased(KeyEvent ke)
+    {
+        println( Thread::currentThread + ' - keyReleased: ' + ke )
     }
 
     //---- Support methods ----------------------------------------------------
@@ -318,11 +394,16 @@ class SpinCube extends GlDemo
         sState.attachShaderProgram( gl, sp, true )
 
         // Extract attribute locations
-        vertPosLoc   = sState.getAttribLocation( gl, 'vert_position' )
-        vertColorLoc = sState.getAttribLocation( gl, 'vert_color' )
+        vertPosLoc      = sState.getAttribLocation( gl, 'vert_position' )
+        vertTexCoordLoc = sState.getAttribLocation( gl, 'vert_tex_coord' )
+
+        textureUniformLoc = sState.getUniformLocation( gl, 'tex' )
     }
-    
-    override setWindow(GLWindow window) {
+
+    override setWindow(GLWindow window)
+    {
+        // register ourselves as key listener
+        window.addKeyListener( this )
     }
-    
+
 }

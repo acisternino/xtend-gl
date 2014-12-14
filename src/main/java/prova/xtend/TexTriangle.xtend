@@ -1,5 +1,6 @@
 package prova.xtend
 
+import com.jogamp.newt.opengl.GLWindow
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import com.jogamp.opengl.util.glsl.ShaderState
@@ -9,7 +10,6 @@ import javax.media.opengl.GL
 import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
-import javax.media.opengl.GLEventListener
 import javax.media.opengl.GLPipelineFactory
 
 import static com.google.common.io.Resources.*
@@ -18,7 +18,7 @@ import static com.jogamp.common.nio.Buffers.*
 /**
  * Simple 2D textured triangle.
  */
-class TexTriangle implements GLEventListener
+class TexTriangle extends GlDemo
 {
     val static SHADERS_DIR     = 'shaders'
     val static SHADERS_BIN_DIR = SHADERS_DIR + '/bin'
@@ -258,6 +258,9 @@ class TexTriangle implements GLEventListener
         vertTexCoordLoc = sState.getAttribLocation( gl, 'vert_tex_coord' )
 
         textureUniformLoc = sState.getUniformLocation( gl, 'tex' )
+    }
+    
+    override setWindow(GLWindow window) {
     }
 
 }
