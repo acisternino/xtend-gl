@@ -18,6 +18,7 @@ import javax.media.opengl.GLUniformData
 
 import static com.google.common.io.Resources.*
 import static com.jogamp.common.nio.Buffers.*
+import static com.jogamp.opengl.math.FloatUtil.*
 import static javax.media.opengl.fixedfunc.GLMatrixFunc.*
 
 /**
@@ -31,7 +32,9 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
     val static CLEAR_BUFFER_BITS = GL::GL_COLOR_BUFFER_BIT.bitwiseOr( GL::GL_DEPTH_BUFFER_BIT )
 
-    val static TEXTURE_NAME = 'Wood_texture_by_shadowh3.jpg'
+    val static TEXTURE_NAME = 'grey_square128.png'
+
+    val static DEG_TO_RAD = 0.01745329251994329576f
 
     // Array containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
@@ -41,59 +44,24 @@ class SpinTexCube2 extends GlDemo implements KeyListener
     val vaos = newIntArrayOfSize( 1 )       // for Vertex Array  Objects
     val texs = newIntArrayOfSize( 1 )       // for Texture       Objects
 
-    // These vertices will be used to build a VBO to draw a cube
+    // These vertices will be used to build a VBO to draw a XZ plane
 
     val float[] vertices = #[
-    //   X    Y    Z      S   T
-         1f,  1f,  1f,    0f, 0f,   //  0
-         1f,  1f, -1f,    1f, 0f,   //  1
-         1f, -1f, -1f,    1f, 1f,   //  2
-         1f, -1f,  1f,    0f, 1f,   //  3
-
-         1f, -1f,  1f,    0f, 0f,   //  4
-         1f,  1f,  1f,    1f, 0f,   //  5
-        -1f,  1f,  1f,    1f, 1f,   //  6
-        -1f, -1f,  1f,    0f, 1f,   //  7
-
-        -1f, -1f,  1f,    0f, 0f,   //  8
-        -1f, -1f, -1f,    1f, 0f,   //  9
-        -1f,  1f, -1f,    1f, 1f,   // 10
-        -1f,  1f,  1f,    0f, 1f,   // 11
-
-        -1f,  1f,  1f,    0f, 0f,   // 12
-         1f,  1f,  1f,    1f, 0f,   // 13
-         1f,  1f, -1f,    1f, 1f,   // 14
-        -1f,  1f, -1f,    0f, 1f,   // 15
-
-        -1f,  1f, -1f,    0f, 0f,   // 16
-         1f,  1f, -1f,    1f, 0f,   // 17
-         1f, -1f, -1f,    1f, 1f,   // 18
-        -1f, -1f, -1f,    0f, 1f,   // 19
-
-        -1f, -1f, -1f,    0f, 0f,   // 20
-         1f, -1f, -1f,    1f, 0f,   // 21
-         1f, -1f,  1f,    1f, 1f,   // 22
-        -1f, -1f,  1f,    0f, 1f    // 23
+    //    X   Y     Z      S    T
+        -64f, 0f,  64f,    0f, 64f,     // 0
+         64f, 0f,  64f,   64f, 64f,     // 1
+         64f, 0f,   0f,   64f, 32f,     // 2
+         64f, 0f, -64f,   64f,  0f,     // 3
+        -64f, 0f, -64f,    0f,  0f,     // 4
+        -64f, 0f,   0f,    0f, 32f      // 5
     ]
 
     val short[] indices = #[
-         0 as short,  1 as short,  2 as short,   // face 1
-         2 as short,  3 as short,  0 as short,
+         0 as short,  1 as short,  5 as short,      // upper rectangle
+         1 as short,  2 as short,  5 as short,
 
-         4 as short,  6 as short,  5 as short,   // face 2
-         4 as short,  7 as short,  6 as short,
-
-         8 as short,  9 as short, 10 as short,   // face 3
-        10 as short, 11 as short,  8 as short,
-
-        12 as short, 15 as short, 13 as short,   // face 4
-        15 as short, 14 as short, 13 as short,
-
-        17 as short, 16 as short, 18 as short,   // face 5
-        18 as short, 16 as short, 19 as short,
-
-        21 as short, 20 as short, 23 as short,   // face 6
-        23 as short, 22 as short, 21 as short
+         5 as short,  2 as short,  4 as short,      // lower rectangle
+         4 as short,  2 as short,  3 as short
     ]
 
     // Global OpenGL objects
@@ -114,10 +82,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
     // Fields
 
     float aspect                // Window aspect ratio
-
-    var volatile rotation = 1   // Rotation direction changed by pressing 'r'
-
-    var angle = 0
 
     //---- GLEventListener ----------------------------------------------------
 
@@ -146,7 +110,7 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
         // Load image file (specify the texture type to automatically handle vertical flipping)
         val image = newInputStreamSupplier( getResource( TexTriangle, TEXTURE_NAME ) ).input
-        texData = TextureIO::newTextureData( gl.GLProfile, image, false, TextureIO::JPG )
+        texData = TextureIO::newTextureData( gl.GLProfile, image, false, TextureIO::PNG )
 
         // Create texture object
         gl.glGenTextures( 1, texs, 0 )
@@ -178,9 +142,44 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
         //---- PMV matrix ---------------------------------
 
+        var modelMatrix = newFloatArrayOfSize( 16 )
+        makeIdentity( modelMatrix )
+
+        var viewMatrix = newFloatArrayOfSize( 16 )
+        makeLookAt( viewMatrix, 0,
+            #[ 0f, 3f, 10f ], 0,   // eye
+            #[ 0f, 3f,  0f ], 0,   // target
+            #[ 0f, 4f, 10f ], 0,   // up
+            newFloatArrayOfSize( 16 )
+        )
+
+        var modelViewMatrix = newFloatArrayOfSize( 16 )
+        multMatrix( viewMatrix, modelMatrix, modelViewMatrix )
+
+        println(
+            matrixToString( null, 'R', '%5.2f', modelViewMatrix, 0, 4, 4, false )
+        )
+
+        var projectionMatrix = newFloatArrayOfSize( 16 )
+        makePerspective(
+            projectionMatrix, 0,
+            true,
+            60f * DEG_TO_RAD,   // fovy (radians)
+            1,                  // aspect ratio
+            0.1f,               // near plane
+            100f                // far plane
+        )
+
+        println(
+            matrixToString( null, 'R', '%5.2f', projectionMatrix, 0, 4, 4, false )
+        )
+
+        //---- PMV matrix ---------------------------------
+
         // Initialise the PMV matrix
         pmvMatrix.glMatrixMode( GL_PROJECTION )
         pmvMatrix.glLoadIdentity
+
         pmvMatrix.glMatrixMode( GL_MODELVIEW )
         pmvMatrix.glLoadIdentity
 
@@ -269,10 +268,16 @@ class SpinTexCube2 extends GlDemo implements KeyListener
         // Use shaders
         sState.useProgram( gl, true )
 
-        // Set location in front of camera
+        // Move location of camera
         pmvMatrix.glMatrixMode( GL_PROJECTION )
         pmvMatrix.glLoadIdentity
-        pmvMatrix.gluPerspective( 45f, aspect, 1f, 100f )
+        pmvMatrix.gluPerspective( 45f, aspect, 0.1f, 100f )     // FOV, aspect, near, far
+
+        pmvMatrix.gluLookAt(
+            0f,  5f, 0f,    // eye
+            0f,  5f, 5f,    // center
+            0f, 10f, 0f     // up
+        )
 
         sState.uniform( gl, sState.getUniform( 'pmvMatrix' ) )
 
@@ -314,14 +319,7 @@ class SpinTexCube2 extends GlDemo implements KeyListener
         pmvMatrix.glLoadIdentity
 
         // Move back object along z axis
-        pmvMatrix.glTranslatef( 0f, 0f, -7f )
-
-        // update rotation angle
-        angle = angle + ( rotation * 2 )
-
-        // Rotate it along Z and Y axes
-        pmvMatrix.glRotatef( angle, 0f, 0f, 1f )
-        pmvMatrix.glRotatef( angle, 0f, 1f, 0f )
+        pmvMatrix.glTranslatef( 0f, 0f, -10f )
 
         pmvMatrix.update
     }
@@ -346,7 +344,7 @@ class SpinTexCube2 extends GlDemo implements KeyListener
         gl.glBindVertexArray( vaos.get( 0 ) )
         gl.glBindTexture( GL::GL_TEXTURE_2D, texs.get( 0 ) )
 
-        // Draw the cube!
+        // Draw the plane!
         gl.glDrawElements( GL::GL_TRIANGLES, indices.length, GL::GL_UNSIGNED_SHORT, 0L )      // must be GL_UNSIGNED_SHORT!
 
         // Clean-up
@@ -361,12 +359,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
     override keyPressed(KeyEvent ke)
     {
         println( Thread::currentThread + ' - keyPressed: ' + ke )
-        if ( !ke.printableKey || ke.autoRepeat ) {
-            return
-        }
-        if ( ke.keySymbol == KeyEvent::VK_R ) {
-            rotation *= -1
-        }
     }
 
     override keyReleased(KeyEvent ke)
