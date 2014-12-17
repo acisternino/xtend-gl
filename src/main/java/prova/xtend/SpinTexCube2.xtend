@@ -3,7 +3,6 @@ package prova.xtend
 import com.jogamp.newt.event.KeyEvent
 import com.jogamp.newt.event.KeyListener
 import com.jogamp.newt.opengl.GLWindow
-import com.jogamp.opengl.util.PMVMatrix
 import com.jogamp.opengl.util.glsl.ShaderCode
 import com.jogamp.opengl.util.glsl.ShaderProgram
 import com.jogamp.opengl.util.glsl.ShaderState
@@ -14,12 +13,10 @@ import javax.media.opengl.GL2ES2
 import javax.media.opengl.GL3
 import javax.media.opengl.GLAutoDrawable
 import javax.media.opengl.GLPipelineFactory
-import javax.media.opengl.GLUniformData
 
 import static com.google.common.io.Resources.*
 import static com.jogamp.common.nio.Buffers.*
 import static com.jogamp.opengl.math.FloatUtil.*
-import static javax.media.opengl.fixedfunc.GLMatrixFunc.*
 
 /**
  * Spinning textured cube.
@@ -34,7 +31,7 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
     val static TEXTURE_NAME = 'grey_square128.png'
 
-    val static DEG_TO_RAD = 0.01745329251994329576f
+    val static DEG_TO_RAD = 0.0174532925199432f
 
     // Array containing buffer and vertex indices (i.e. names).
     // This is kind of a "directory" of buffer objects where their ID's are stored.
@@ -47,13 +44,13 @@ class SpinTexCube2 extends GlDemo implements KeyListener
     // These vertices will be used to build a VBO to draw a XZ plane
 
     val float[] vertices = #[
-    //    X   Y     Z      S    T
-        -64f, 0f,  64f,    0f, 64f,     // 0
-         64f, 0f,  64f,   64f, 64f,     // 1
-         64f, 0f,   0f,   64f, 32f,     // 2
-         64f, 0f, -64f,   64f,  0f,     // 3
-        -64f, 0f, -64f,    0f,  0f,     // 4
-        -64f, 0f,   0f,    0f, 32f      // 5
+    //    X     Y    Z       S    T
+        -64f,  64f,  0f,     0f, 64f,     // 0
+         64f,  64f,  0f,    64f, 64f,     // 1
+         64f,   0f,  0f,    64f, 32f,     // 2
+         64f, -64f,  0f,    64f,  0f,     // 3
+        -64f, -64f,  0f,     0f,  0f,     // 4
+        -64f,   0f,  0f,     0f, 32f      // 5
     ]
 
     val short[] indices = #[
@@ -68,8 +65,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
     val sState = new ShaderState
 
-    val pmvMatrix = new PMVMatrix
-
     var TextureData texData
 
     // Shader attributes
@@ -79,9 +74,14 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
     int textureUniformLoc       // Location of the "tex" texture uniform in fragment shader
 
+    // Transformation matrices
+
+    val modelViewMatrix  = newFloatArrayOfSize( 16 )
+    val projectionMatrix = newFloatArrayOfSize( 16 )
+
     // Fields
 
-    float aspect                // Window aspect ratio
+    var aspect = 1.0f           // Window aspect ratio
 
     //---- GLEventListener ----------------------------------------------------
 
@@ -109,7 +109,7 @@ class SpinTexCube2 extends GlDemo implements KeyListener
         //---- Texture ------------------------------------
 
         // Load image file (specify the texture type to automatically handle vertical flipping)
-        val image = newInputStreamSupplier( getResource( TexTriangle, TEXTURE_NAME ) ).input
+        val image = newInputStreamSupplier( getResource( SpinTexCube2, TEXTURE_NAME ) ).input
         texData = TextureIO::newTextureData( gl.GLProfile, image, false, TextureIO::PNG )
 
         // Create texture object
@@ -140,54 +140,39 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
         //gl.glBindTexture( GL::GL_TEXTURE_2D, 0 )
 
-        //---- PMV matrix ---------------------------------
+        //---- Matrices -----------------------------------
 
+        // Translate plane 10 units away from origin
         var modelMatrix = newFloatArrayOfSize( 16 )
-        makeIdentity( modelMatrix )
+        makeTranslation( modelMatrix, true, 0f, 0f, -10f )
 
+        // Position camera
         var viewMatrix = newFloatArrayOfSize( 16 )
         makeLookAt( viewMatrix, 0,
-            #[ 0f, 3f, 10f ], 0,   // eye
-            #[ 0f, 3f,  0f ], 0,   // target
-            #[ 0f, 4f, 10f ], 0,   // up
+            #[ 0f, 3f, 10f ], 0,    // eye
+            #[ 0f, 3f,  0f ], 0,    // target
+            #[ 0f, 4f, 10f ], 0,    // up
             newFloatArrayOfSize( 16 )
         )
 
-        var modelViewMatrix = newFloatArrayOfSize( 16 )
+        // Create ModelView matrix
         multMatrix( viewMatrix, modelMatrix, modelViewMatrix )
 
-        println(
-            matrixToString( null, 'R', '%5.2f', modelViewMatrix, 0, 4, 4, false )
-        )
+        println( Thread::currentThread + ' - ModelView matrix:' )
+        println( matrixToString( null, 'R', '%5.2f', modelViewMatrix, 0, 4, 4, false ) )
 
-        var projectionMatrix = newFloatArrayOfSize( 16 )
+        // Create Projection matrix
         makePerspective(
             projectionMatrix, 0,
             true,
             60f * DEG_TO_RAD,   // fovy (radians)
-            1,                  // aspect ratio
+            aspect,             // aspect ratio
             0.1f,               // near plane
             100f                // far plane
         )
 
-        println(
-            matrixToString( null, 'R', '%5.2f', projectionMatrix, 0, 4, 4, false )
-        )
-
-        //---- PMV matrix ---------------------------------
-
-        // Initialise the PMV matrix
-        pmvMatrix.glMatrixMode( GL_PROJECTION )
-        pmvMatrix.glLoadIdentity
-
-        pmvMatrix.glMatrixMode( GL_MODELVIEW )
-        pmvMatrix.glLoadIdentity
-
-        // Define first uniform matrix
-        val pmvMatrixUniform = new GLUniformData( 'pmvMatrix', 4, 4, pmvMatrix.glGetPMvMatrixf )
-
-        // Bind to uniform attribute in vertex shader
-        sState.uniform( gl, pmvMatrixUniform )
+        println( Thread::currentThread + ' - Projection matrix:' )
+        println( matrixToString( null, 'R', '%5.2f', projectionMatrix, 0, 4, 4, false ) )
 
         //---- Vertex Buffer Objects ----------------------
 
@@ -245,9 +230,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
         gl.glBindVertexArray( 0 )
         gl.glBindTexture( GL::GL_TEXTURE_2D, 0 )
         sState.useProgram( gl, false )
-
-        // Show the completed shader state
-        println( Thread::currentThread + ' - ' + sState )
     }
 
     /**
@@ -264,24 +246,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
         // Set view port to cover full screen
         gl.glViewport( 0, 0, width, height )
-
-        // Use shaders
-        sState.useProgram( gl, true )
-
-        // Move location of camera
-        pmvMatrix.glMatrixMode( GL_PROJECTION )
-        pmvMatrix.glLoadIdentity
-        pmvMatrix.gluPerspective( 45f, aspect, 0.1f, 100f )     // FOV, aspect, near, far
-
-        pmvMatrix.gluLookAt(
-            0f,  5f, 0f,    // eye
-            0f,  5f, 5f,    // center
-            0f, 10f, 0f     // up
-        )
-
-        sState.uniform( gl, sState.getUniform( 'pmvMatrix' ) )
-
-        sState.useProgram( gl, false )
     }
 
     /**
@@ -315,13 +279,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
      */
     def private update(GLAutoDrawable drawable)
     {
-        pmvMatrix.glMatrixMode( GL_MODELVIEW )
-        pmvMatrix.glLoadIdentity
-
-        // Move back object along z axis
-        pmvMatrix.glTranslatef( 0f, 0f, -10f )
-
-        pmvMatrix.update
     }
 
     /**
@@ -336,9 +293,6 @@ class SpinTexCube2 extends GlDemo implements KeyListener
 
         // Use shaders
         sState.useProgram( gl, true )
-
-        // Pass PMV matrix to shaders
-        sState.uniform( gl, sState.getUniform( 'pmvMatrix' ) )
 
         // Bind VAO & Texture
         gl.glBindVertexArray( vaos.get( 0 ) )
@@ -371,6 +325,75 @@ class SpinTexCube2 extends GlDemo implements KeyListener
     def private createShaders(GL3 gl)
     {
         // Vertex shader
+        var vshader = gl.glCreateShader( GL::GL_VERTEX_SHADER )
+        
+        val vsCode = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR, SHADERS_BASE_NAME, true )
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        var url = getResource( SpinTexCube2, SHADERS_DIR + '/' + SHADERS_BASE_NAME + '.vp' )    // use StandardCharsets::US_ASCII
+        println( Thread::currentThread + ' - Loading shader: ' + url )
+        
+        // or
+        String vsSource = ShaderCode.readShaderSource( SpinTexCube2, SHADERS_DIR + '/' + SHADERS_BASE_NAME + '.vp', false )
+        // or use method shaderSource() once a ShaderCode object is cretaed
+        
+        
+glShaderSource(vshader, 1, &vertex_shader_source, NULL); // vertex_shader_source is a GLchar* containing glsl shader source code
+glCompileShader(vshader);
+
+GLint vertex_compiled;
+glGetShaderiv(vshader, GL_COMPILE_STATUS, &vertex_compiled);
+if (vertex_compiled != GL_TRUE)
+{
+    GLsizei log_length = 0;
+    GLchar message[1024];
+    glGetShaderInfoLog(vshader, 1024, &log_length, message);
+    // Write the error to a log
+}
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         val vs = ShaderCode.create( gl, GL2ES2::GL_VERTEX_SHADER, this.class, SHADERS_DIR, SHADERS_BIN_DIR,
             SHADERS_BASE_NAME, true )
 

@@ -1,9 +1,12 @@
 #version 150
 
+// Vertex attributes
 in  vec3 vert_position;
 in  vec2 vert_tex_coord;
 
-uniform mat4 pmvMatrix[2];
+// Transformation matrices
+uniform mat4 mv_matrix;     // ModelView
+uniform mat4 prj_matrix;    // Projection
 
 out vec2 frag_tex_coord;
 
@@ -16,6 +19,7 @@ void main() {
      *  The standard transformation for a vertex in a Vertex Shader is:
      *
      *  gl_Position = gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+    gl_Position = prj_matrix * mv_matrix * vec4( vert_position, 1.0 );
      */
-    gl_Position = pmvMatrix[0] * pmvMatrix[1] * vec4( vert_position, 1.0 );
+    gl_Position = vec4( vert_position, 1.0 );
 }
